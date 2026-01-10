@@ -3,6 +3,7 @@
 **Hybrid legged-to-wheeled locomotion adaptation for the Stanford Pupper quadruped.**
 
 ![Wheeled Gait Demo](README/wheeled_gait.gif)
+
 *Simulated Wheeled Pupper v3 tracking 0.75 m/s forward velocity with stable gait.*
 
 ## Overview
@@ -29,6 +30,7 @@ The trained policy demonstrates stable, energy-efficient rolling gaits that outp
 *   **Convergence**: Training stabilizes within 200M timesteps using the custom curriculum.
 
 ![Training Rewards](README/training_rewards.png)
+
 *Training curve showing reward convergence over 200M timesteps, validating policy stability.*
 
 ## Legged to Wheeled Conversion
