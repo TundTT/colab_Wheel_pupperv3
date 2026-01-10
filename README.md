@@ -1,66 +1,84 @@
-# Wheel Pupper V3 Training (Colab)
+# Wheeled Pupper v3 Simulation – MuJoCo (MJX/JAX)
 
-This repository hosts the Google Colab notebook used for training the Reinforcement Learning (RL) policy for the **Wheeled Pupper V3** robot. This project builds upon the original Pupper V3 (legged) codebase, adapting it for a hybrid wheeled-legged locomotion platform using MuJoCo MJX for accelerated simulation on GPU.
+**Hybrid legged-to-wheeled locomotion adaptation for the Stanford Pupper quadruped.**
 
-## Key Contributions: Legged to Wheeled Conversion
+![Wheeled Gait Demo](README/wheeled_gait.gif)
+*Simulated Wheeled Pupper v3 tracking 0.75 m/s forward velocity with stable gait.*
 
-This project represents a significant modification of the original quadrupedal training pipeline to support wheeled locomotion. Key engineering efforts include:
+## Overview
 
-1.  **Joint Limit Unlocking**:
-    *   The standard Pupper V3 has finite joint limits for all actuators.
-    *   For this wheeled variant, the distal joints (ankles) were replaced with wheels. I modified the simulation configuration to set the joint limits for these specific indices (Wheel_FR, Wheel_FL, Wheel_BR, Wheel_BL) to infinity (`float('inf')`), enabling **continuous rotation** required for rolling.
+This repository hosts the **Sim-to-Real** training pipeline for the Wheeled Pupper v3, a hybrid robotics platform developed at the **University of Wisconsin–Madison LeggedAI Lab**. 
 
-2.  **Model Adaptation**:
-    *   Integrated a custom MuJoCo XML model (`Wheel_pupper.xml`) that defines the wheeled morphology.
-    *   Configured the simulation environment to correctly load this modified XML, ensuring that collision geometries and actuator parameters match the physical wheeled robot.
+Leveraging the **MuJoCo MJX** physics engine and **JAX**, this project implements a high-fidelity digital twin that enables rapid **Reinforcement Learning (PPO)** of locomotion policies. The primary goal is to achieve seamless wheeled mobility through shape-memory polymer morphing adaptations.
 
-3.  **Control Logic Adjustments**:
-    *   Adapted the actuator control parameters in `Colab_wheeled.ipynb` to support the different dynamic requirements of driving vs. stepping.
-    *   Ensured that the RL agent can learn hybrid policies that may utilize both leg articulation and wheel rotation.
+### Key Features
+- **Physics-Accurate Simulation**: Fully defined `Wheel_pupper.xml` model with joint limit modifications for continuous wheel rotation.
+- **Massively Parallel Training**: PPO implementation using JAX/Brax to simulate thousands of environments in parallel on GPU (A100/L4).
+- **Custom Reward Shaping**: Engineered reward functions prioritizing:
+    - **Velocity Tracking**: Stable tracking up to **0.75 m/s**.
+    - **Energy Efficiency**: Minimization of torque and mechanical power (Cost of Transport).
+    - **Smoothness**: Penalties for jerk and acceleration changes to ensure hardware safety.
+- **Domain Randomization**: Robustness conditioning for real-world deployment (friction, mass, perturbation noise).
 
-## Getting Started
+## Key Results
 
-The core of this project is a self-contained Google Colab notebook. You do not need to install dependencies locally.
+The trained policy demonstrates stable, energy-efficient rolling gaits that outperform the baseline legged locomotion on flat terrain.
 
-[**Open in Google Colab**](https://colab.research.google.com/github/TundTT/colab_Wheel_pupperv3/blob/main/Colab_wheeled.ipynb)
+*   **Velocity**: Consistently achieves target velocities of 0.75 m/s.
+*   **Stability**: Robust recovery from disturbances due to optimized PPO hyperparameters.
+*   **Convergence**: Training stabilizes within 200M timesteps using the custom curriculum.
 
-## Prerequisites
+![Training Rewards](README/training_rewards.png)
+*Training curve showing reward convergence over 200M timesteps, validating policy stability.*
 
-*   **Google Account**: Required to run Colab notebooks. A **Pro** subscription is recommended to access better GPUs (A100/L4) for faster training.
-*   **Weights & Biases Account**: Required for logging training metrics. You will need your API key.
+## Legged to Wheeled Conversion
 
-## Repositories
+This project represents a specific engineering adaptation of the standard Pupper v3:
 
-This project involves multiple component repositories:
+1.  **Joint Limit Unlocking**: Modified actuator definitions in `Wheel_pupper.xml` to allow infinite rotation (`float('inf')`) for distal wheel joints (indices: `Wheel_FR`, `Wheel_FL`, `Wheel_BR`, `Wheel_BL`), enabling true rolling locomotion.
+2.  **Actuator Dynamics**: Adjusted control parameters (Kp/Kv) in `Colab_wheeled.ipynb` to account for the continuous rotation dynamics versus discrete stepping.
+3.  **Sim-to-Real Morphing**: Designed to support future hardware integration with shape-memory polymer shins that transition legs to wheels.
 
-*   **Training Notebook** (This Repo): [colab_Wheel_pupperv3](https://github.com/TundTT/colab_Wheel_pupperv3)
-*   **Core Codebase**: [mjx_Wheels_pupperv3](https://github.com/TundTT/mjx_Wheels_pupperv3) - Contains the underlying python logic, finding the `pupperv3_mjx` package.
-*   **Robot Description**: [description_Wheels_pupperv3](https://github.com/TundTT/description_Wheels_pupperv3) - Contains the MuJoCo XML models (`Wheel_pupper.xml`) and meshes.
+## Quick Start (Colab)
 
-## Usage Instructions
+The easiest way to run the simulation and training is via the self-contained Google Colab notebook:
 
-1.  **Select GPU Runtime**:
-    *   In Colab, go to **Runtime** -> **Change runtime type**.
-    *   Select **T4 GPU** (Standard users) or **A100/L4 GPU** (Pro users).
+[**Open `Colab_wheeled.ipynb` in Google Colab**](https://colab.research.google.com/github/TundTT/colab_Wheel_pupperv3/blob/main/Colab_wheeled.ipynb)
 
-2.  **Login to Weights & Biases**:
-    *   Run the setup cells.
-    *   When prompted, enter your W&B API key to enable experiment tracking.
+### Requirements
+*   **Google Account** (Pro key recommended for A100 GPU access)
+*   **Weights & Biases (W&B)** API Key for logging
 
-3.  **Configure Training**:
-    *   The notebook includes a "Training Config" section where you can adjust parameters like:
-        *   `num_timesteps`: Total training steps (default is 200M, increase for better performance).
-        *   `learning_rate`: Adjust based on training stability.
-        *   `n_obstacles`: Add terrain complexity to the environment.
+### Local Setup
+If running locally (Linux/WSL recommended with CUDA 12+):
 
-4.  **Train**:
-    *   Run the "Training" cells to start the PPO learning process.
-    *   Monitor progress via the printed logs or your W&B dashboard.
+```bash
+# Clone the repo
+git clone https://github.com/TundTT/colab_Wheel_pupperv3.git
+cd colab_Wheel_pupperv3
 
-5.  **Visualize**:
-    *   The notebook includes cells to visualize the trained policy behavior directly in the browser.
+# Install dependencies (requires JAX with CUDA support)
+pip install mujoco==3.2.7 mujoco-mjx==3.2.7 brax==0.12.1 flax==0.10.2 orbax==0.1.9
+```
 
-## Troubleshooting
+## Usage
 
-*   **Interrupting Training**: If you cannot stop the training cell, go to **Runtime** -> **Restart session** to clear the state.
-*   **CUDA/JAX Errors**: Ensure you are running on a GPU instance. The notebook attempts to automatically resolve dependency conflicts between JAX, Orbax, and CUDA.
+1.  **Configure Training**:
+    Modify the `training_config` dictionary in the notebook:
+    ```python
+    training_config.ppo.num_timesteps = 200_000_000  # Scaling for convergence
+    training_config.lin_vel_x_range = [-0.75, 0.75]  # Target velocity range
+    ```
+2.  **Run Simulation**:
+    Execute the cells to spawn the `Wheel_pupper.xml` in the MJX environment.
+3.  **Train Policy**:
+    Start the PPO training loop. Logs will appear in your W&B dashboard.
+
+## Acknowledgments
+
+*   **UW–Madison LeggedAI Lab**: For hardware resources and research guidance.
+*   **Stanford Student Robotics**: Original Pupper v3 hardware design and curriculum.
+*   **Google DeepMind**: For MuJoCo and MJX physics engine support.
+
+---
+**Author**: [Tund Theerawit](https://www.linkedin.com/in/tund-theerawit) | [GitHub](https://github.com/TundTT)
